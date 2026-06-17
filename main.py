@@ -1,6 +1,9 @@
 import feedparser
 import random
 from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+from rich.layout import Layout
 
 SOURCES = {
     "Aeon": "https://aeon.co/feed.rss",
@@ -49,8 +52,19 @@ def main():
     console.print("[bold blue]Test[/bold blue]\n")
     source, title, summary = get_random_article()
 
-    display_article(source, title, summary)
+    if source:
+        display_article(source, title, summary)
+        console.print(
+            "\n[dim]Press Enter to get another one or Ctrl+C to exit...[/dim]"
+        )
+        input()
+    else:
+        console.print("\n[red]Failed to fetch articles. Check your internet.[/red]")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        while True:
+            main()
+    except KeyboardInterrupt:
+        console.print("\nGoodbye!")
