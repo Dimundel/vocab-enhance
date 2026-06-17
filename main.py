@@ -1,9 +1,13 @@
 import feedparser
 import random
+import os
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from rich.layout import Layout
+from google import genai
+
+api_key = os.environ.get("GEMINI_API_KEY")
+client = genai.Client()
 
 SOURCES = {
     "Aeon": "https://aeon.co/feed.rss",
@@ -68,3 +72,7 @@ if __name__ == "__main__":
             main()
     except KeyboardInterrupt:
         console.print("\nGoodbye!")
+    response = client.models.generate_content(
+        model="gemini-flash-lite-latest", contents="Hello! Are you here?"
+    )
+    print(response.text)
