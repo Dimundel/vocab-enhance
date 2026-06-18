@@ -18,7 +18,6 @@ SOURCES = {
 
 PROMPT = """
 Find in the text below at least 2 words from advanced vocabulary (C1-C2 level) and print them, one by line.
-Next to each word print their position (word-wise).
 Do not write anything more.
 """
 
@@ -39,13 +38,21 @@ def get_random_article():
     return source_name, article.title, article.summary
 
 
-def display_article(source, title, summary):
+def display_article(source, title, summary, highlight_words):
     import re
 
     clean_text = re.sub("<[^<]+?>", "", summary)
     header = Text(f"\nSource: {source}", style="italic cyan")
     title_text = Text(title, style="bold magenta")
     body = Text(f"\n{clean_text}", style="white")
+
+    if highlight_words:
+        for word in highlight_words:
+            word = word.strip().strip(".,!?:;")
+            if not word:
+                continue
+            pattern = rf"\b{re.escape(word)}\b"
+            body.highlight_regex(pattern, style="bold yellow underline")
 
     panel = Panel(
         Text.assemble(title_text, body),
@@ -71,11 +78,14 @@ def main():
     prompt = PROMPT + "\n" + summary
 
     if source:
-        display_article(source, title, summary)
-
         response = client.models.generate_content(
             model="gemini-flash-lite-latest", contents=prompt
         )
+
+        highlight_words = get_words_from_llm_response(response.text)
+
+        display_article(source, title, summary, highlight_words)
+
         words = get_words_from_llm_response(response.text)
         for word in words:
             print(word)
