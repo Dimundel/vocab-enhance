@@ -1,12 +1,13 @@
 import feedparser
 import random
 import os
+from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from google import genai
 
-api_key = os.environ.get("GEMINI_API_KEY")
+load_dotenv()
 client = genai.Client()
 
 SOURCES = {
@@ -14,6 +15,12 @@ SOURCES = {
     "The Guardian": "https://www.theguardian.com/news/series/the-long-read/rss",
     "Wired": "https://www.wired.com/feed/rss",
 }
+
+PROMPT = """
+Find in the text below at least 2 words from advanced vocabulary (C1-C2 level) and print them, one by line.
+Next to each word print their position (word-wise).
+Do not write anything more.
+"""
 
 console = Console()
 
@@ -51,13 +58,28 @@ def display_article(source, title, summary):
     console.print(panel)
 
 
+def get_words_from_llm_response(response):
+    words = response.lower().split()
+    return words
+
+
 def main():
     console.clear()
     console.print("[bold blue]Test[/bold blue]\n")
     source, title, summary = get_random_article()
 
+    prompt = PROMPT + "\n" + summary
+
     if source:
         display_article(source, title, summary)
+
+        response = client.models.generate_content(
+            model="gemini-flash-lite-latest", contents=prompt
+        )
+        words = get_words_from_llm_response(response.text)
+        for word in words:
+            print(word)
+
         console.print(
             "\n[dim]Press Enter to get another one or Ctrl+C to exit...[/dim]"
         )
@@ -72,7 +94,3 @@ if __name__ == "__main__":
             main()
     except KeyboardInterrupt:
         console.print("\nGoodbye!")
-    response = client.models.generate_content(
-        model="gemini-flash-lite-latest", contents="Hello! Are you here?"
-    )
-    print(response.text)
