@@ -11,3 +11,6 @@ wheels/
 
 # Environment keys
 .env
+
+# Database
+words.db
