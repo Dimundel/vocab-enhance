@@ -2,6 +2,8 @@ import feedparser
 import random
 import json
 import re
+import requests
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
@@ -13,17 +15,32 @@ client = genai.Client()
 
 SOURCES = {
     "Aeon": "https://aeon.co/feed.rss",
+    "BBC": "http://feeds.bbci.co.uk/news/rss.xml",
+    "The Conversation": "https://theconversation.com/us/articles.atom",
+    "Nautilus": "https://nautil.us/feed/",
     "The Guardian": "https://www.theguardian.com/news/series/the-long-read/rss",
-    "Wired": "https://www.wired.com/feed/rss",
 }
 
 PROMPT = """
-Find in the text below at least 2 words from advanced vocabulary (C1-C2 level).
+Find in the text below words from advanced vocabulary (C1-C2 level).
 Return ONLY a JSON array, no markdown, no explanation.
 Example: [{"word": "ephemeral", "definition": "lasting for a very short time"}]
 """
 
 console = Console()
+
+
+def get_full_text(url):
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    article = soup.find("article")
+    if article:
+        paragraphs = article.find_all("p")
+    else:
+        paragraphs = soup.find_all("p")
+
+    return " ".join(p.get_text() for p in paragraphs)
 
 
 def get_random_article():
@@ -37,7 +54,10 @@ def get_random_article():
         return None, None, None
 
     article = random.choice(feed.entries[:10])
-    return source_name, article.title, article.summary
+
+    with console.status("[bould green]Fetching full article..."):
+        full_text = get_full_text(article.link)
+    return source_name, article.title, full_text
 
 
 def display_article(source, title, summary, highlight_words):
