@@ -15,4 +15,4 @@ def extract_words_from_text(text: str) -> list[dict]:
     response = CLIENT.models.generate_content(
         model="gemini-flash-lite-latest", contents=prompt
     )
-    return json.loads(response)
+    return json.loads(response.text)

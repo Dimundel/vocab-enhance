@@ -29,3 +29,23 @@ def display_article(source, title, full_text, highlight_words):
     )
 
     console.print(panel)
+
+
+def display_words(words):
+    if not words:
+        return
+
+    content = Text()
+    for i, row in enumerate(words, 1):
+        content.append(f"{i}. ", style="bold cyan")
+        content.append(f"{row['word']}", style="bold yellow")
+        content.append(f": {row['definition']}\n")
+
+    panel = Panel(
+        content,
+        title="[bold green]Vocabulary List[/bold green]",
+        border_style="green",
+        padding=(1, 2),
+        width=80,
+    )
+    console.print(panel)
