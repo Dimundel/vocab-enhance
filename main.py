@@ -72,7 +72,13 @@ def save_words(conn, words, source_url):
 
 
 def get_full_text(url):
-    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+        response.raise_for_status()
+    except requests.RequestException as e:
+        console.print(f"[red]Error fetching article: {e}[/red]")
+        return None
+
     soup = BeautifulSoup(response.text, "html.parser")
 
     article = soup.find("article")
@@ -96,16 +102,15 @@ def get_random_article():
 
     article = random.choice(feed.entries[:10])
 
-    with console.status("[bould green]Fetching full article..."):
+    with console.status("[bold green]Fetching full article..."):
         full_text = get_full_text(article.link)
     return source_name, article.title, full_text
 
 
-def display_article(source, title, summary, highlight_words):
-    clean_text = re.sub("<[^<]+?>", "", summary)
+def display_article(source, title, full_text, highlight_words):
     header = Text(f"\nSource: {source}", style="italic cyan")
     title_text = Text(title, style="bold magenta")
-    body = Text(f"\n{clean_text}", style="white")
+    body = Text(f"\n{full_text}", style="white")
 
     if highlight_words:
         for row in highlight_words:
@@ -157,19 +162,19 @@ def display_words(words):
 def main(conn):
     console.clear()
     console.print("[bold blue]Test[/bold blue]\n")
-    source, title, summary = get_random_article()
+    source, title, full_text = get_random_article()
 
     if source:
-        prompt = PROMPT + "\n" + summary
+        prompt = PROMPT + "\n" + full_text
 
-        with console.status("[bold green]Analzying text..."):
+        with console.status("[bold green]Analazying text..."):
             response = client.models.generate_content(
                 model="gemini-flash-lite-latest", contents=prompt
             )
 
         highlight_words = get_words_from_llm_response(response.text)
 
-        display_article(source, title, summary, highlight_words)
+        display_article(source, title, full_text, highlight_words)
         print()
         display_words(highlight_words)
 
