@@ -44,3 +44,20 @@ def save_words(conn, words, source_url):
             ),
         )
     conn.commit()
+
+
+def get_words_for_practice(conn, limit=5):
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT word, definition, context, simple_synonym 
+        FROM words 
+        WHERE context IS NOT NULL
+        ORDER BY RANDOM()
+        LIMIT ?
+    """,
+        (limit,),
+    )
+
+    columns = ["word", "definition", "context", "simple_synonym"]
+    return [dict(zip(columns, row)) for row in cursor.fetchall()]

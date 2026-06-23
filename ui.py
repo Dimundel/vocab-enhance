@@ -1,4 +1,5 @@
 import re
+import random
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
@@ -47,3 +48,27 @@ def display_words(words):
         padding=(1, 2),
     )
     console.print(panel)
+
+
+def display_word_bank(words_list):
+    shuffled_words = words_list.copy()
+    random.shuffle(shuffled_words)
+
+    bank_text = Text("   |   ".join(shuffled_words), style="bold cyan")
+
+    panel = Panel(
+        bank_text,
+        title="[bold yellow]Word Bank[/bold yellow]",
+        border_style="yellow",
+        expand=False,
+    )
+    console.print(panel)
+    console.print()
+
+
+def display_practice_sentences(questions):
+    for q in questions:
+        number = Text(f"{q['id']}. ", style="bold magenta")
+        sentence = Text(q["hidden_context"], style="white")
+        console.print(Text.assemble(number, sentence))
+        console.print()
