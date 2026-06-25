@@ -30,30 +30,37 @@ def mode_fetch(conn):
 
 
 def mode_practice(conn):
-    words_data = get_words_for_practice(conn, limit=5)
+    words_data = get_words_for_practice(conn, limit=10)
 
     if len(words_data) < 5:
         return
 
-    word_bank = [row["word"] for row in words_data]
+    word_bank = []
     questions = []
 
-    for idx, row in enumerate(words_data, 1):
+    for row in words_data:
         target_word = row["word"]
         context = row["context"]
         synonym = row["simple_synonym"]
 
         pattern = rf"(?i)\b{re.escape(target_word)}\b"
-        hidden_context = re.sub(pattern, f"[___] (hint: {synonym})", context)
+        hidden_context, count = re.subn(pattern, f"[___] ({synonym})", context)
 
+        if count == 0:
+            continue
+
+        word_bank.append(target_word)
         questions.append(
             {
-                "id": idx,
+                "id": len(questions) + 1,
                 "target_word": target_word,
                 "hidden_context": hidden_context,
                 "definition": row["definition"],
             }
         )
+
+        if len(questions) == 5:
+            break
 
     display_word_bank(word_bank)
     display_practice_sentences(questions)
