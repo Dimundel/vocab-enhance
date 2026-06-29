@@ -1,6 +1,13 @@
 import re
 import argparse
-from database import get_connection, init_db, save_words, get_words_for_practice
+from database import (
+    get_connection,
+    init_db,
+    save_words,
+    get_words_for_practice,
+    get_learning_status,
+    update_word_progess,
+)
 from fetcher import get_random_article
 from llm import extract_words_from_text
 from ui import (
@@ -12,11 +19,22 @@ from ui import (
 )
 
 
+ACTIVE_LIMIT = 20
+
+
 def mode_fetch(conn):
+    learning_words, mastered_words = get_learning_status(conn)
+
+    if learning_words >= ACTIVE_LIMIT:
+        console.print(
+            f"Limit of {ACTIVE_LIMIT} words has reached. Practice them first to fetch new articles."
+        )
+        return False
+
     with console.status("[bold green]Searching for new article...[/bold green]"):
         source, title, text = get_random_article()
     if source:
-        with console.status("[bold green]Analazying text...[/bold green]"):
+        with console.status("[bold green]Analyzing text...[/bold green]"):
             words = extract_words_from_text(text)
         display_article(source, title, text, words)
         print()
@@ -28,11 +46,28 @@ def mode_fetch(conn):
         )
         input()
 
+    return True
+
 
 def mode_practice(conn):
-    words_data = get_words_for_practice(conn, limit=10)
+    words_data = get_words_for_practice(conn, limit=10, strict=True)
+
+    if not words_data:
+        console.print(
+            "[yellow]Everything is learned for now! Showing some active words for extra practice...[/yellow]\n"
+        )
+        words_data = get_words_for_practice(conn, limit=10, strict=False)
+
+    if not words_data:
+        console.print(
+            "[bold red]No words to practice. Go fetch some articles first![/bold red]"
+        )
+        return
 
     if len(words_data) < 5:
+        console.print(
+            "[bold red]Not enough words in database (need at least 5). Fetch some articles![/bold red]"
+        )
         return
 
     word_bank = []
@@ -74,12 +109,14 @@ def mode_practice(conn):
         if answer.lower() == q["target_word"].lower():
             console.print("[bold green]Correct![/bold green]\n")
             score += 1
+            update_word_progess(conn, q["target_word"], True)
         else:
             console.print("[bold red]Incorrect.[/bold red]")
             console.print(
                 f"Correct answer: [bold green]{q['target_word']}[/bold green]"
             )
             console.print(f"[dim]Definition: {q['definition']}[/dim]\n")
+            update_word_progess(conn, q["target_word"], False)
 
     console.print(f"[bold cyan]Your result: {score}/{len(questions)}[/bold cyan]")
 
@@ -96,8 +133,8 @@ def main():
         mode_practice(conn)
     else:
         try:
-            while True:
-                mode_fetch(conn)
+            while mode_fetch(conn):
+                pass
         except KeyboardInterrupt:
             console.print("\n[yellow]Goodbye![/yellow]")
     conn.close()
