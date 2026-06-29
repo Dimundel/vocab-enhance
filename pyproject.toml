@@ -1,9 +1,11 @@
 [project]
-name = "vocab-enhannce"
+name = "wordminer"
 version = "0.1.0"
-description = "Add your description here"
+description = "Mine C1-C2 vocabulary from real articles and learn it with spaced repetition"
 readme = "README.md"
 requires-python = ">=3.13"
+license = { text = "MIT" }
+keywords = ["vocabulary", "spaced-repetition", "language-learning", "cli", "llm"]
 dependencies = [
     "bs4>=0.0.2",
     "feedparser>=6.0.12",
