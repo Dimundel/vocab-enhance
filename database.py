@@ -37,10 +37,10 @@ def save_words(conn, words, source_url):
             VALUES (?, ?, ?, ?, ?)
         """,
             (
-                row["word"],
+                row["word"].strip(),
                 row["definition"],
                 row["context"],
-                row["simple_synonym"],
+                row["simple_synonym"].strip(),
                 source_url,
             ),
         )
