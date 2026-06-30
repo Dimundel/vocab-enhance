@@ -94,11 +94,11 @@ def update_word_progress(conn, word, is_correct):
     if not row:
         return
 
-    current_interval, ease_factor = row
+    current_interval, ease_factor = row["interval"], row["ease_factor"]
 
     if is_correct:
         new_ease = max(1.3, ease_factor + 0.1)
-        new_interval = max(1, math.ceil(current_interval * ease_factor))
+        new_interval = max(1, math.ceil(current_interval * new_ease))
 
     else:
         new_ease = max(1.3, ease_factor - 0.2)
